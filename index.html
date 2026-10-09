@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Sentimen Abu Vulkanik Anak Krakatau</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone untuk Memproses React JSX di Browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Google Fonts Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    const DEFAULT_DATASET_ID = 'xmFJuy7OuhMHk3h83';
+    const DEFAULT_TOKEN = 'apify_api_KJhecDGVtvCcI06jCPQPPNbpSJby8a0qroJ0';
+
+    // Mock Data TikTok
+    const MOCK_TIKTOK_DATA = [
+      {
+        id: 'tiktok_1',
+        text: 'Abu vulkanik Anak Krakatau makin pekat hari ini di pesisir Banten. Banyak warga mulai sesak nafas dan batuk-batuk parah. Mohon bantuan masker medis! 😷🆘 #AnakKrakatau #AbuVulkanik #Banten',
+        authorMeta: { name: 'warga_banten_official', nickName: 'Banten Watch', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80' },
+        diggCount: 14200, shareCount: 3850, playCount: 245000, commentCount: 1290, createTimeISO: '2026-10-08T14:30:00.000Z'
+      },
+      {
+        id: 'tiktok_2',
+        text: 'Alhamdulillah bantuan masker gratis dan tim medis dari relawan BPBD sudah tiba di Posko Selat Sunda. Terima kasih banyak orang baik! 🙏❤️ #KrakatauErupsi #Relawan',
+        authorMeta: { name: 'posko_peduli_krakatau', nickName: 'Posko Peduli', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80' },
+        diggCount: 28900, shareCount: 5120, playCount: 410000, commentCount: 2150, createTimeISO: '2026-10-08T11:15:00.000Z'
+      },
+      {
+        id: 'tiktok_3',
+        text: 'Update Erupsi Gunung Anak Krakatau: Kolom abu teramati setinggi 1.500m condong ke arah Barat Daya. Status Siaga Level III. Tetap tenang dan ikuti arahan resmi PVMBG/BMKG. 🌋📍',
+        authorMeta: { name: 'infobencana_id', nickName: 'Info Bencana RI', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
+        diggCount: 8500, shareCount: 2100, playCount: 180000, commentCount: 430, createTimeISO: '2026-10-08T09:00:00.000Z'
+      },
+      {
+        id: 'tiktok_4',
+        text: 'Volcanic ash from Anak Krakatau reaching coastal areas today. Flights delayed at nearby airports. Everyone please stay indoors and wear N95 masks! Stay safe all. 🌋✈️',
+        authorMeta: { name: 'se_asia_news', nickName: 'SE Asia Digest', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80' },
+        diggCount: 19400, shareCount: 6200, playCount: 320000, commentCount: 890, createTimeISO: '2026-10-08T07:45:00.000Z'
+      },
+      {
+        id: 'tiktok_5',
+        text: '#AnakKrakatau #Erupsi #AbuVulkanik #SelatSunda #BMKG #BPBD #Waspada',
+        authorMeta: { name: 'trending_viral_id', nickName: 'Trending Now', avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80' },
+        diggCount: 3100, shareCount: 450, playCount: 95000, commentCount: 110, createTimeISO: '2026-10-08T06:20:00.000Z'
+      },
+      {
+        id: 'tiktok_6',
+        text: 'Aktivitas nelayan Selat Sunda lumpuh total akibat jarak pandang terbatas dari debu vulkanik. Kerugian kapal ikan sangat besar dan rumah warga tertutup abu tebal mencekam. 💔',
+        authorMeta: { name: 'suara_nelayan_lampung', nickName: 'Kabar Pesisir', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' },
+        diggCount: 22100, shareCount: 4300, playCount: 380000, commentCount: 1780, createTimeISO: '2026-10-07T21:10:00.000Z'
+      },
+      {
+        id: 'tiktok_7',
+        text: 'Mari kita doakan keselamatan saudara-saudara kita di Banten & Lampung. Semoga Allah lindungi dari bahaya susulan bencana erupsi Krakatau. Aamiin ya Rabbal Alamin. 🤲✨',
+        authorMeta: { name: 'pemuda_hijrah_lamsel', nickName: 'Rahmat Hidayat', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80' },
+        diggCount: 35600, shareCount: 7800, playCount: 520000, commentCount: 3400, createTimeISO: '2026-10-07T18:00:00.000Z'
+      },
+      {
+        id: 'tiktok_8',
+        text: 'Anak Krakatau vulkanik kül püskürtdü, sahil rayonlarında hava keyfiyyəti pisləşib. Sakinlərə qoruyucu maskalardan istifadə etmək tövsiyə olunur.',
+        authorMeta: { name: 'global_az_news', nickName: 'Xəbər Dünyası', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
+        diggCount: 4200, shareCount: 980, playCount: 110000, commentCount: 210, createTimeISO: '2026-10-07T15:30:00.000Z'
+      }
+    ];
+
+    // Multilingual Sentiment Classifier
+    function classifySentiment(text) {
+      if (!text || typeof text !== 'string') return { label: 'Netral', confidence: 0.80, language: 'ID' };
+      const trimmed = text.trim();
+      const tokens = trimmed.split(/\s+/);
+      const isOnlyHashtags = tokens.length > 0 && tokens.every(w => w.startsWith('#'));
+      if (isOnlyHashtags) return { label: 'Netral', confidence: 0.95, language: 'ID' };
+
+      const lowerText = trimmed.toLowerCase();
+      let language = 'ID';
+      if (/(bölge|püskürtdü|sahil|hava|keyfiyyəti|sakinlərə|maskalardan|istifadə|tövsiyə)/i.test(lowerText)) {
+        language = 'AZ';
+      } else if (/(the|is|are|volcano|ash|eruption|coastal|flights|delayed|stay|indoors|safe|wear|mask|everyone|please)/i.test(lowerText)) {
+        language = 'EN';
+      }
+
+      const posKeywords = ['alhamdulillah', 'bantuan', 'terima kasih', 'selamat', 'aman', 'sehat', 'lancar', 'tanggap', 'bagus', 'berdoa', 'dukungan', 'salut', 'mendoakan', 'aamiin', 'amin', 'mantap', 'keren', 'bersatu', 'alhamdullilah', 'posko', 'stay safe', 'solidaritas'];
+      const negKeywords = ['sesak', 'batuk', 'parah', 'darurat', 'bahaya', 'hancur', 'rusak', 'lumpuh', 'kerugian', 'sulit', 'mencekam', 'terjebak', 'korban', 'terganggu', 'ancaman', 'panik', 'takut', 'delayed', 'menderita', 'pisləşib', 'trauma', 'sakit', 'sesak nafas'];
+
+      let posScore = 0;
+      let negScore = 0;
+
+      posKeywords.forEach(kw => { if (lowerText.includes(kw)) posScore += 1; });
+      negKeywords.forEach(kw => { if (lowerText.includes(kw)) negScore += 1; });
+
+      if (posScore > negScore) {
+        return { label: 'Positif', confidence: Math.min(0.70 + posScore * 0.1, 0.98), language };
+      } else if (negScore > posScore) {
+        return { label: 'Negatif', confidence: Math.min(0.70 + negScore * 0.1, 0.98), language };
+      }
+      return { label: 'Netral', confidence: 0.82, language };
+    }
+
+    function Dashboard() {
+      const [datasetId, setDatasetId] = useState(DEFAULT_DATASET_ID);
+      const [tokenInput, setTokenInput] = useState(DEFAULT_TOKEN);
+      const [loading, setLoading] = useState(false);
+      const [errorMsg, setErrorMsg] = useState(null);
+      const [isUsingMock, setIsUsingMock] = useState(false);
+      const [rawItems, setRawItems] = useState(MOCK_TIKTOK_DATA);
+      const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
+      const [searchTerm, setSearchTerm] = useState('');
+      const [sentimentFilter, setSentimentFilter] = useState('ALL');
+      const [expandedItems, setExpandedItems] = useState({});
+
+      const fetchData = async (targetId, token) => {
+        setLoading(true);
+        setErrorMsg(null);
+        setIsUsingMock(false);
+
+        const activeToken = token || DEFAULT_TOKEN;
+        const url = `https://api.apify.com/v2/datasets/${targetId.trim()}/items?token=${activeToken.trim()}&limit=8`;
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+          const res = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+            if (res.status === 404) throw new Error('Dataset tidak ditemukan atau sudah kedaluwarsa (HTTP 404). Memuat data simulasi...');
+            if (res.status === 401) throw new Error('Token API Apify tidak valid (HTTP 401). Memuat data simulasi...');
+            throw new Error(`Gagal terhubung ke Apify (${res.status}). Memuat data simulasi...`);
+          }
+
+          const data = await res.json();
+          if (!Array.isArray(data) || data.length === 0) {
+            throw new Error('Dataset kosong atau tidak memiliki item. Memuat data simulasi...');
+          }
+
+          setRawItems(data.slice(0, 8));
+          setLastUpdated(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
+        } catch (err) {
+          setErrorMsg(err.message || 'Koneksi gagal. Menggunakan data simulasi TikTok.');
+          setIsUsingMock(true);
+          setRawItems(MOCK_TIKTOK_DATA);
+          setLastUpdated(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      useEffect(() => {
+        fetchData(DEFAULT_DATASET_ID, DEFAULT_TOKEN);
+      }, []);
+
+      const processedData = useMemo(() => {
+        return rawItems.map((item, index) => {
+          const text = item.text || item.full_text || item.caption || item.title || 'Tidak ada teks';
+          const author = item.authorMeta || {};
+          const name = author.nickName || author.name || item.author || 'Pengguna TikTok';
+          const avatar = author.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${index}`;
+          const likes = item.diggCount || item.likes || 0;
+          const shares = item.shareCount || item.shares || 0;
+          const plays = item.playCount || item.views || 0;
+          const comments = item.commentCount || item.comments || 0;
+          const sentimentInfo = classifySentiment(text);
+
+          return {
+            id: item.id || `data_${index}`,
+            no: index + 1,
+            text,
+            name,
+            avatar,
+            likes,
+            shares,
+            plays,
+            comments,
+            ...sentimentInfo
+          };
+        });
+      }, [rawItems]);
+
+      const filteredData = useMemo(() => {
+        return processedData.filter(item => {
+          const matchesSearch = item.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                item.name.toLowerCase().includes(searchTerm.toLowerCase());
+          const matchesSentiment = sentimentFilter === 'ALL' || item.label === sentimentFilter;
+          return matchesSearch && matchesSentiment;
+        });
+      }, [processedData, searchTerm, sentimentFilter]);
+
+      const stats = useMemo(() => {
+        const total = processedData.length;
+        const positif = processedData.filter(d => d.label === 'Positif').length;
+        const negatif = processedData.filter(d => d.label === 'Negatif').length;
+        const netral = processedData.filter(d => d.label === 'Netral').length;
+        const totalViews = processedData.reduce((acc, d) => acc + d.plays, 0);
+        return { total, positif, negatif, netral, totalViews };
+      }, [processedData]);
+
+      const downloadCSV = () => {
+        const headers = ["No", "Penulis", "Teks", "Likes", "Shares", "Views", "Komentar", "Sentimen", "Keyakinan", "Bahasa"];
+        const rows = filteredData.map(d => [
+          d.no,
+          `"${d.name.replace(/"/g, '""')}"`,
+          `"${d.text.replace(/"/g, '""')}"`,
+          d.likes,
+          d.shares,
+          d.plays,
+          d.comments,
+          d.label,
+          `${(d.confidence * 100).toFixed(0)}%`,
+          d.language
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Analisis_Sentimen_Krakatau_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      const toggleExpand = (id) => {
+        setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          {/* Header */}
+          <header className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-3 py-1 bg-red-100 text-red-700 font-semibold text-xs rounded-full uppercase tracking-wider">Laporan Tanggap Bencana</span>
+                <span className="text-xs text-slate-500">Pembaruan: {lastUpdated} WIB</span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                Analisis Sentimen Masyarakat: Abu Vulkanik Gunung Anak Krakatau
+              </h1>
+              <p className="text-sm md:text-base text-slate-600 mt-1">
+                Monitoring persepsi, kebutuhan darurat, dan respon publik berbasis data TikTok (8 Sampel Terkait)
+              </p>
+            </div>
+            <button 
+              onClick={downloadCSV}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl shadow-sm transition-all duration-200 shrink-0"
+            >
+              📥 Unduh Data CSV
+            </button>
+          </header>
+
+          {/* Panel Apify Connector */}
+          <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-md">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg">⚙️</div>
+                <div>
+                  <h3 className="font-semibold text-base">Panel Koneksi API Apify</h3>
+                  <p className="text-xs text-slate-400">Atur Dataset ID dan Token untuk menarik data TikTok terbaru</p>
+                </div>
+              </div>
+              <div>
+                {loading ? (
+                  <span className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 text-xs font-medium rounded-full">
+                    ⏳ Memuat Data...
+                  </span>
+                ) : isUsingMock ? (
+                  <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-medium rounded-full">
+                    ⚠️ Mode Simulasi (Offline/Fallback)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-medium rounded-full">
+                    ✅ Terhubung ke Apify API
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Dataset ID / Run ID</label>
+                <input 
+                  type="text" 
+                  value={datasetId} 
+                  onChange={(e) => setDatasetId(e.target.value)}
+                  placeholder="xmFJuy7OuhMHk3h83"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Apify API Token</label>
+                <input 
+                  type="password" 
+                  value={tokenInput} 
+                  onChange={(e) => setTokenInput(e.target.value)}
+                  placeholder="apify_api_..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <button 
+                  onClick={() => fetchData(datasetId, tokenInput)}
+                  disabled={loading}
+                  className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium px-4 py-2 rounded-xl text-sm transition-all"
+                >
+                  {loading ? 'Menghubungkan...' : '🔄 Uji Ulang Koneksi API'}
+                </button>
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div className="mt-4 p-3 bg-red-950/60 border border-red-800/60 text-red-300 rounded-xl text-xs flex items-center gap-2">
+                ⚠️ <span>{errorMsg}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Metric Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span className="text-xs font-medium text-slate-500 block">Total Data TikTok</span>
+              <span className="text-2xl font-bold text-slate-900 mt-1 block">{stats.total} Content</span>
+              <span className="text-xs text-blue-600 mt-2 block font-medium">Sampel Diproses</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span className="text-xs font-medium text-emerald-600 block">Sentimen Positif</span>
+              <span className="text-2xl font-bold text-emerald-700 mt-1 block">{stats.positif}</span>
+              <span className="text-xs text-slate-500 mt-2 block font-medium">{((stats.positif/stats.total)*100).toFixed(0)}% dari total</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span className="text-xs font-medium text-rose-600 block">Sentimen Negatif</span>
+              <span className="text-2xl font-bold text-rose-700 mt-1 block">{stats.negatif}</span>
+              <span className="text-xs text-slate-500 mt-2 block font-medium">{((stats.negatif/stats.total)*100).toFixed(0)}% dari total</span>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span className="text-xs font-medium text-slate-600 block">Sentimen Netral</span>
+              <span className="text-2xl font-bold text-slate-700 mt-1 block">{stats.netral}</span>
+              <span className="text-xs text-slate-500 mt-2 block font-medium">{((stats.netral/stats.total)*100).toFixed(0)}% dari total</span>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <span className="text-xs font-medium text-slate-500 block">Total Views (Jangkauan)</span>
+              <span className="text-2xl font-bold text-slate-900 mt-1 block">{stats.totalViews.toLocaleString('id-ID')}</span>
+              <span className="text-xs text-purple-600 mt-2 block font-medium">Tayangan Video</span>
+            </div>
+          </div>
+
+          {/* Visualisasi Grafik Ringkasan */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Pie Chart Representation */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <h3 className="text-base font-bold text-slate-800 mb-4">Distribusi Sentimen Konten</h3>
+              <div className="space-y-4 my-auto">
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1">
+                    <span className="text-emerald-700 font-semibold">Positif ({stats.positif})</span>
+                    <span>{((stats.positif/stats.total)*100).toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div className="bg-emerald-500 h-3 rounded-full transition-all duration-500" style={{ width: `${(stats.positif/stats.total)*100}%` }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1">
+                    <span className="text-rose-700 font-semibold">Negatif ({stats.negatif})</span>
+                    <span>{((stats.negatif/stats.total)*100).toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div className="bg-rose-500 h-3 rounded-full transition-all duration-500" style={{ width: `${(stats.negatif/stats.total)*100}%` }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1">
+                    <span className="text-slate-700 font-semibold">Netral ({stats.netral})</span>
+                    <span>{((stats.netral/stats.total)*100).toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div className="bg-slate-400 h-3 rounded-full transition-all duration-500" style={{ width: `${(stats.netral/stats.total)*100}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Engagement Summary */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-base font-bold text-slate-800 mb-4">Metrik Engagement Publik</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <span className="text-xs text-slate-500 block">Total Likes</span>
+                  <span className="text-lg font-bold text-slate-900 mt-1 block">
+                    {processedData.reduce((acc, d) => acc + d.likes, 0).toLocaleString('id-ID')} ❤️
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <span className="text-xs text-slate-500 block">Total Shares</span>
+                  <span className="text-lg font-bold text-slate-900 mt-1 block">
+                    {processedData.reduce((acc, d) => acc + d.shares, 0).toLocaleString('id-ID')} 🔁
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <span className="text-xs text-slate-500 block">Total Komentar</span>
+                  <span className="text-lg font-bold text-slate-900 mt-1 block">
+                    {processedData.reduce((acc, d) => acc + d.comments, 0).toLocaleString('id-ID')} 💬
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <span className="text-xs text-slate-500 block">Rata-rata Views</span>
+                  <span className="text-lg font-bold text-slate-900 mt-1 block">
+                    {Math.round(stats.totalViews / (stats.total || 1)).toLocaleString('id-ID')} 👁️
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter & Table Section */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Filter Controls */}
+            <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
+              <h2 className="font-bold text-lg text-slate-900">Rincian Data Konten & Sentimen (8 Sampel)</h2>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input 
+                  type="text"
+                  placeholder="Cari kata kunci / akun..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                <select
+                  value={sentimentFilter}
+                  onChange={(e) => setSentimentFilter(e.target.value)}
+                  className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                >
+                  <option value="ALL">Semua Sentimen</option>
+                  <option value="Positif">🟢 Positif</option>
+                  <option value="Negatif">🔴 Negatif</option>
+                  <option value="Netral">⚪ Netral</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100/70 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <th className="py-3.5 px-4 text-center">No</th>
+                    <th className="py-3.5 px-4">Akun TikTok</th>
+                    <th className="py-3.5 px-4 max-w-xs">Teks Konten</th>
+                    <th className="py-3.5 px-4 text-right">Likes</th>
+                    <th className="py-3.5 px-4 text-right">Shares</th>
+                    <th className="py-3.5 px-4 text-right">Views</th>
+                    <th className="py-3.5 px-4 text-center">Sentimen</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 text-sm">
+                  {filteredData.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-8 text-slate-500 text-sm">
+                        Tidak ada data yang sesuai dengan pencarian atau filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredData.map((item) => {
+                      const isExpanded = expandedItems[item.id];
+                      const shouldTruncate = item.text.length > 120;
+                      const textToShow = shouldTruncate && !isExpanded ? item.text.slice(0, 120) + '...' : item.text;
+
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-4 px-4 text-center font-medium text-slate-500 text-xs">
+                            {item.no}
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-3">
+                              <img 
+                                src={item.avatar} 
+                                alt={item.name} 
+                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                                onError={(e) => { e.target.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + item.no; }}
+                              />
+                              <div className="truncate max-w-[130px]">
+                                <div className="font-semibold text-slate-900 text-xs truncate">{item.name}</div>
+                                <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono">
+                                  Bahasa: {item.language}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-4 px-4 max-w-xs">
+                            <p className="text-slate-700 text-xs leading-relaxed break-words">
+                              {textToShow}
+                            </p>
+                            {shouldTruncate && (
+                              <button 
+                                onClick={() => toggleExpand(item.id)}
+                                className="mt-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 underline"
+                              >
+                                {isExpanded ? 'Sembunyikan' : 'Lihat Selengkapnya'}
+                              </button>
+                            )}
+                          </td>
+
+                          <td className="py-4 px-4 text-right font-medium text-slate-700 text-xs">
+                            {item.likes.toLocaleString('id-ID')}
+                          </td>
+
+                          <td className="py-4 px-4 text-right font-medium text-slate-700 text-xs">
+                            {item.shares.toLocaleString('id-ID')}
+                          </td>
+
+                          <td className="py-4 px-4 text-right font-medium text-slate-900 font-semibold text-xs">
+                            {item.plays.toLocaleString('id-ID')}
+                          </td>
+
+                          <td className="py-4 px-4 text-center">
+                            {item.label === 'Positif' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">
+                                🟢 Positif <span className="text-[10px] font-normal opacity-75">({(item.confidence*100).toFixed(0)}%)</span>
+                              </span>
+                            )}
+                            {item.label === 'Negatif' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-100 text-rose-800 text-xs font-bold rounded-full">
+                                🔴 Negatif <span className="text-[10px] font-normal opacity-75">({(item.confidence*100).toFixed(0)}%)</span>
+                              </span>
+                            )}
+                            {item.label === 'Netral' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-full">
+                                ⚪ Netral <span className="text-[10px] font-normal opacity-75">({(item.confidence*100).toFixed(0)}%)</span>
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Footer Disclaimer */}
+          <footer className="text-center py-6 text-xs text-slate-500 border-t border-slate-200">
+            <p>📌 <strong>Catatan Metodologi:</strong> Sampel hanya terdiri dari 8 data TikTok dan belum mewakili seluruh opini publik nasional secara keseluruhan.</p>
+            <p className="mt-1">Dashboard Analisis Sentimen Bencana Vulkanik © 2026</p>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<Dashboard />);
+  </script>
+</body>
+</html>
